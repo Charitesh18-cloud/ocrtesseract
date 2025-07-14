@@ -1,0 +1,58 @@
+name: suryaocr_flutter
+description: "A new Flutter OCR app with Supabase backend."
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_tesseract_ocr: ^0.4.28
+  file_picker: ^8.0.0
+  image_picker: ^1.0.7
+  path_provider: ^2.0.15
+  intl: ^0.18.1
+  app_links: ^3.4.1
+  flutter_pdfview: ^1.3.2
+  screenshot: any
+
+  supabase_flutter: ^2.9.1
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_launcher_icons: ^0.13.1  # Moved here properly
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/tessdata/tel.traineddata
+    - assets/tessdata/eng.traineddata
+    - assets/tessdata_config.json
+    - assets/welcome.png
+    - assets/ocr.png
+    - assets/google_icon.png
+    - assets/tessdata/asm.traineddata
+    - assets/tessdata/ben.traineddata
+    - assets/tessdata/guj.traineddata
+    - assets/tessdata/hin.traineddata
+    - assets/tessdata/kan.traineddata
+    - assets/tessdata/mal.traineddata
+    - assets/tessdata/mar.traineddata
+    - assets/tessdata/nep.traineddata
+    - assets/tessdata/ori.traineddata
+    - assets/tessdata/pan.traineddata
+    - assets/tessdata/san.traineddata
+    - assets/tessdata/sin.traineddata
+    - assets/tessdata/tam.traineddata     
