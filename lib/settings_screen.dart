@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
-  Future<void> _logout(BuildContext context) async {
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  static const Color cobaltBlue = Color(0xFF0047AB);
+
+  Future _logout(BuildContext context) async {
     final supabase = Supabase.instance.client;
 
     await supabase.auth.signOut();
@@ -13,7 +20,7 @@ class SettingsScreen extends StatelessWidget {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
-  Future<void> _sendFeedback(BuildContext context) async {
+  Future _sendFeedback(BuildContext context) async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: 'ocr9384@gmail.com',
@@ -55,54 +62,121 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cobaltBlue = Color(0xFF0047AB);
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: cobaltBlue,
-        centerTitle: true,
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Center(
-            child: Text(
-              'Account Settings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: cobaltBlue,
+      backgroundColor: const Color(0xFFF9F9F9),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cobaltBlue,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    // Back button
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Settings title - expanded to fill available space
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          'Settings',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Empty space to balance the back button
+                    const SizedBox(width: 48),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildOption(
-            icon: Icons.person,
-            label: 'Profile',
-            onTap: () => Navigator.pushNamed(context, '/profile'),
-          ),
-          _buildOption(
-            icon: Icons.lock_reset,
-            label: 'Reset Password',
-            onTap: () => Navigator.pushNamed(context, '/reset'),
-          ),
-          _buildOption(
-            icon: Icons.feedback,
-            label: 'Send Feedback',
-            onTap: () => _sendFeedback(context),
-          ),
-          _buildOption(
-            icon: Icons.logout,
-            label: 'Logout',
-            onTap: () => _logout(context),
-          ),
-        ],
+        ),
       ),
-      backgroundColor: const Color(0xFFF9F9F9),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cobaltBlue,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Account Settings',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildOption(
+                      icon: Icons.person,
+                      label: 'Profile',
+                      onTap: () => Navigator.pushNamed(context, '/profile'),
+                    ),
+                    _buildOption(
+                      icon: Icons.lock_reset,
+                      label: 'Reset Password',
+                      onTap: () => Navigator.pushNamed(context, '/reset'),
+                    ),
+                    _buildOption(
+                      icon: Icons.feedback,
+                      label: 'Send Feedback',
+                      onTap: () => _sendFeedback(context),
+                    ),
+                    _buildOption(
+                      icon: Icons.logout,
+                      label: 'Logout',
+                      onTap: () => _logout(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -55,7 +55,6 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 40),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -78,9 +77,7 @@ class LoginScreen extends StatelessWidget {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
                   const Row(
                     children: [
                       Expanded(
@@ -106,7 +103,6 @@ class LoginScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   Row(
                     children: [
                       Expanded(

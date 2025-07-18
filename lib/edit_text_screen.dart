@@ -179,16 +179,6 @@ class _EditTextScreenState extends State<EditTextScreen> {
     _showSnackBar('Copied to clipboard!');
   }
 
-  Future<void> _saveCurrentPage() async {
-    if (!_validateSave()) return;
-
-    final name = await _getPageName(_currentPage + 1);
-    if (name == null) return;
-
-    await _executeSave(() => _savePageToSupabase(name, _currentPage));
-    _showSnackBar('Page ${_currentPage + 1} saved successfully!');
-  }
-
   Future<void> _saveAllPages() async {
     if (!_validateSave()) return;
 
@@ -202,21 +192,6 @@ class _EditTextScreenState extends State<EditTextScreen> {
       }
     });
     _showSnackBar('All ${_textControllers.length} page(s) saved!');
-    Navigator.pop(context);
-  }
-
-  Future<void> _saveOneByOne() async {
-    if (!_validateSave()) return;
-
-    await _executeSave(() async {
-      for (int i = 0; i < _textControllers.length; i++) {
-        final name = await _getPageName(i + 1);
-        if (name != null) {
-          await _savePageToSupabase(name, i);
-        }
-      }
-    });
-    _showSnackBar('All pages saved individually!');
     Navigator.pop(context);
   }
 
@@ -274,14 +249,6 @@ class _EditTextScreenState extends State<EditTextScreen> {
       'extracted_file_url': 'extractedfiles/$extractedFilePath',
       'description': name,
     });
-  }
-
-  Future<String?> _getPageName(int pageNumber) {
-    final title = _textControllers.length == 1 ? 'Name Document' : 'Name Page $pageNumber';
-    final hint = _textControllers.length == 1
-        ? 'Enter name for this document'
-        : 'Enter name for page $pageNumber';
-    return _showNameDialog(title, hint);
   }
 
   Future<String?> _getBaseName() {
@@ -372,7 +339,7 @@ class _EditTextScreenState extends State<EditTextScreen> {
           const SizedBox(height: 16),
           // Text editor
           Container(
-            height: 250,
+            height: 300,
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border.all(color: cobaltBlue),
@@ -392,32 +359,25 @@ class _EditTextScreenState extends State<EditTextScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Action buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildButton(Icons.copy, 'Copy', _copyToClipboard, cobaltBlue),
-              _buildButton(Icons.save, 'Save Page', _saveCurrentPage, cobaltBlue,
-                  loading: _isSaving),
-            ],
+          // Copy button
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: ElevatedButton.icon(
+              onPressed: _copyToClipboard,
+              icon: const Icon(Icons.copy, color: Colors.white),
+              label: const Text('Copy Text', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cobaltBlue,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildButton(IconData icon, String label, VoidCallback? onPressed, Color color,
-      {bool loading = false}) {
-    return ElevatedButton.icon(
-      onPressed: loading ? null : onPressed,
-      icon: loading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-          : Icon(icon, color: Colors.white),
-      label: Text(label, style: const TextStyle(color: Colors.white)),
-      style: ElevatedButton.styleFrom(backgroundColor: color),
     );
   }
 
@@ -452,13 +412,66 @@ class _EditTextScreenState extends State<EditTextScreen> {
     final totalPages = _textControllers.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5FC),
-      appBar: AppBar(
-        title: Text(
-            totalPages == 1 ? 'Edit OCR Text' : 'Edit OCR Text (${_currentPage + 1}/$totalPages)',
-            style: const TextStyle(color: Colors.white)),
-        backgroundColor: cobaltBlue,
-        iconTheme: const IconThemeData(color: Colors.white),
+      backgroundColor: const Color(0xFFF9F9F9),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cobaltBlue,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    // Back button
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Edit Text title - expanded to fill available space
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          totalPages == 1
+                              ? 'Edit OCR Text'
+                              : 'Edit OCR Text (${_currentPage + 1}/$totalPages)',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Empty space to balance the back button
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       body: _isProcessing
           ? const Center(
@@ -475,8 +488,32 @@ class _EditTextScreenState extends State<EditTextScreen> {
               ? const Center(child: Text('No content to display'))
               : Column(
                   children: [
-                    _buildInfoHeader(totalPages),
+                    // OCR Language Info Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cobaltBlue,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'OCR Language: $_languageName',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Progress indicator for multiple pages
                     if (totalPages > 1) _buildProgressIndicator(totalPages),
+
+                    // Main content area
                     Expanded(
                       child: totalPages == 1
                           ? _buildPageContent(0)
@@ -492,41 +529,60 @@ class _EditTextScreenState extends State<EditTextScreen> {
                               itemBuilder: (context, index) => _buildPageContent(index),
                             ),
                     ),
-                    _buildBottomControls(totalPages),
+
+                    // Navigation controls (only show if more than 1 page)
+                    if (totalPages > 1) _buildNavigationControls(totalPages),
                   ],
                 ),
-    );
-  }
-
-  Widget _buildInfoHeader(int totalPages) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('OCR Language: $_languageName',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              Text(totalPages == 1 ? 'Single Document' : 'Page ${_currentPage + 1} of $totalPages',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-            ],
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: cobaltBlue, borderRadius: BorderRadius.circular(16)),
-            child: Text(_type.toUpperCase(),
+      // Full-width Save All Pages button at bottom
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Container(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: _isSaving ? null : _saveAllPages,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.save, color: Colors.white, size: 22),
+              label: Text(
+                _isSaving ? 'Saving...' : 'Save All Pages',
                 style: const TextStyle(
-                    color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  fontFamily: 'Roboto',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cobaltBlue,
+                disabledBackgroundColor: cobaltBlue.withOpacity(0.6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                elevation: 0,
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -552,56 +608,46 @@ class _EditTextScreenState extends State<EditTextScreen> {
     );
   }
 
-  Widget _buildBottomControls(int totalPages) {
+  Widget _buildNavigationControls(int totalPages) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      child: Column(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Save options
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildButton(Icons.save_alt, totalPages == 1 ? 'Save Document' : 'Save All',
-                  _saveAllPages, Colors.green[600]!,
-                  loading: _isSaving),
-              if (totalPages > 1)
-                _buildButton(Icons.save, 'Save One by One', _saveOneByOne, Colors.orange[600]!,
-                    loading: _isSaving),
-            ],
-          ),
-          // Navigation controls (only show if more than 1 page)
-          if (totalPages > 1) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ElevatedButton(
+            onPressed: _currentPage > 0 ? _previousPage : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[600],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ElevatedButton(
-                  onPressed: _currentPage > 0 ? _previousPage : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[600]),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back, color: Colors.white),
-                      SizedBox(width: 4),
-                      Text('Previous', style: TextStyle(color: Colors.white))
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: _currentPage < totalPages - 1 ? _nextPage : null,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[600]),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Next', style: TextStyle(color: Colors.white)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, color: Colors.white)
-                    ],
-                  ),
-                ),
+                Icon(Icons.arrow_back, color: Colors.white),
+                SizedBox(width: 4),
+                Text('Previous', style: TextStyle(color: Colors.white))
               ],
             ),
-          ],
+          ),
+          ElevatedButton(
+            onPressed: _currentPage < totalPages - 1 ? _nextPage : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[600],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Next', style: TextStyle(color: Colors.white)),
+                SizedBox(width: 4),
+                Icon(Icons.arrow_forward, color: Colors.white)
+              ],
+            ),
+          ),
         ],
       ),
     );

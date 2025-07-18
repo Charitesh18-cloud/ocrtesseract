@@ -422,43 +422,106 @@ class _PDFScreenState extends State<PDFScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
-      appBar: AppBar(
-        title: Text(
-          _type == 'pdf' ? 'PDF Pages' : 'Multiple Images',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cobaltBlue,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    // Back button
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Title - expanded to fill available space
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          _type == 'pdf' ? 'PDF Pages' : 'Multiple Images',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Action buttons (same as before but with consistent spacing)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_totalPages > 1)
+                          IconButton(
+                            icon: Icon(
+                              _selectionMode ? Icons.close : Icons.checklist,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            onPressed: _toggleSelectionMode,
+                          ),
+                        if (_selectionMode && _totalPages > 1)
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, color: Colors.white, size: 22),
+                            onSelected: (value) {
+                              if (value == 'selectAll') _selectAllPages();
+                              if (value == 'deselectAll') _deselectAllPages();
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'selectAll',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.select_all),
+                                    SizedBox(width: 8),
+                                    Text('Select All')
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'deselectAll',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.deselect),
+                                    SizedBox(width: 8),
+                                    Text('Deselect All')
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
-        backgroundColor: cobaltBlue,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          if (_totalPages > 1)
-            IconButton(
-              icon: Icon(_selectionMode ? Icons.close : Icons.checklist, color: Colors.white),
-              onPressed: _toggleSelectionMode,
-            ),
-          if (_selectionMode && _totalPages > 1)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (value) {
-                if (value == 'selectAll') _selectAllPages();
-                if (value == 'deselectAll') _deselectAllPages();
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'selectAll',
-                  child: Row(
-                    children: [Icon(Icons.select_all), SizedBox(width: 8), Text('Select All')],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'deselectAll',
-                  child: Row(
-                    children: [Icon(Icons.deselect), SizedBox(width: 8), Text('Deselect All')],
-                  ),
-                ),
-              ],
-            ),
-        ],
       ),
       body: Column(
         children: [

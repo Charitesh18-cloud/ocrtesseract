@@ -524,9 +524,9 @@ class _OCRScreenState extends State<OCRScreen> {
           backgroundColor: color,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(6), // Changed from 12 to 6 to match app bar
           ),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 16), // Increased padding
           elevation: 2,
         ),
         child: Row(
@@ -552,22 +552,66 @@ class _OCRScreenState extends State<OCRScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
-      appBar: AppBar(
-        title: const Text(
-          'OCR Scan - Indic Languages',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: const BoxDecoration(
             color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cobaltBlue,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    // Back button
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // OCR title - expanded to fill available space
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          'OCR Digitization',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Info button
+                    IconButton(
+                      icon: const Icon(Icons.info_outline, color: Colors.white, size: 22),
+                      onPressed: _showInfoDialog,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
-        backgroundColor: cobaltBlue,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.white),
-            onPressed: _showInfoDialog,
-          ),
-        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -682,63 +726,7 @@ class _OCRScreenState extends State<OCRScreen> {
                         ],
                       ),
               ),
-              const SizedBox(height: 16),
-
-              // Language Ready Box
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _filesReady
-                    ? Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.check_circle,
-                                color: Colors.green.shade600,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${_getLanguageEmoji(_selectedLanguage)} ${_getLanguageDisplayName(_selectedLanguage)}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color.fromARGB(255, 9, 149, 241),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Language is ready for OCR',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: const Color.fromARGB(255, 9, 149, 241),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // Action buttons
               Expanded(

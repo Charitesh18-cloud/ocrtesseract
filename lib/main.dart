@@ -99,27 +99,241 @@ class _TesseractOCRAppState extends State<TesseractOCRApp> {
       initialRoute: _isAuthenticated ? '/home' : '/',
       routes: {
         '/': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainScreenWrapper(child: HomeScreen()),
         '/signin': (context) => const SignInScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/reset': (context) => const ResetPasswordScreen(),
-        '/scan': (context) => const OCRScreen(),
+        '/scan': (context) =>
+            const BottomNavBackHandler(child: MainScreenWrapper(child: OCRScreen())),
         '/help': (context) => const HelpScreen(),
-        '/history': (context) => const HistoryScreen(),
-        '/documents': (context) => const DocumentsScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/trash': (context) => const TrashScreen(),
-        // ✅ ADD THIS - PDF Screen route
-        '/pdf': (context) => const PDFScreen(),
+        '/history': (context) => const MainScreenWrapper(child: HistoryScreen()),
+        '/documents': (context) => const MainScreenWrapper(child: DocumentsScreen()),
+        '/profile': (context) =>
+            const BottomNavBackHandler(child: MainScreenWrapper(child: ProfileScreen())),
+        '/settings': (context) => const MainScreenWrapper(child: SettingsScreen()),
+        '/trash': (context) =>
+            const BottomNavBackHandler(child: MainScreenWrapper(child: TrashScreen())),
+        '/pdf': (context) => const MainScreenWrapper(child: PDFScreen()),
         '/edit': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
-          return EditTextScreen(
-            imagePath: args['imagePath'],
-            ocrText: args['ocrText'],
+          return MainScreenWrapper(
+            child: EditTextScreen(
+              imagePath: args['imagePath'],
+              ocrText: args['ocrText'],
+            ),
           );
         },
       },
+    );
+  }
+}
+
+// ✅ Bottom Navigation Back Handler - For Scan, Trash, Profile screens
+class BottomNavBackHandler extends StatelessWidget {
+  final Widget child;
+
+  const BottomNavBackHandler({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false, // Prevent default pop behavior
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // ✅ Always go back to home when back button is pressed
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: child,
+    );
+  }
+}
+
+// ✅ Bottom Navigation Wrapper - ENHANCED with custom back logic
+class MainScreenWrapper extends StatefulWidget {
+  final Widget child;
+
+  const MainScreenWrapper({super.key, required this.child});
+
+  @override
+  State<MainScreenWrapper> createState() => _MainScreenWrapperState();
+}
+
+class _MainScreenWrapperState extends State<MainScreenWrapper> {
+  int _currentIndex = 0;
+  static const Color cobaltBlue = Color(0xFF0047AB);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _setCurrentIndex();
+  }
+
+  void _setCurrentIndex() {
+    final routeName = ModalRoute.of(context)?.settings.name;
+    switch (routeName) {
+      case '/home':
+        _currentIndex = 0;
+        break;
+      case '/scan':
+        _currentIndex = 1;
+        break;
+      case '/trash':
+        _currentIndex = 2;
+        break;
+      case '/profile':
+        _currentIndex = 3;
+        break;
+      default:
+        _currentIndex = 0;
+    }
+  }
+
+  void _onBottomNavTapped(int index) {
+    if (_currentIndex == index) return; // Don't navigate if already on the same screen
+
+    setState(() => _currentIndex = index);
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/scan');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/trash');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+    }
+  }
+
+  Widget _buildBottomNavItem(IconData icon, String label, int index) {
+    final bool isSelected = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => _onBottomNavTapped(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? cobaltBlue : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey,
+              size: 22,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey,
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: widget.child,
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildBottomNavItem(Icons.home, 'Home', 0),
+              _buildBottomNavItem(Icons.camera_alt, 'Scan', 1),
+              _buildBottomNavItem(Icons.delete, 'Trash', 2),
+              _buildBottomNavItem(Icons.person, 'Profile', 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ ALTERNATIVE: Individual Screen Wrappers (if you want more control)
+// You can also create individual wrappers for each screen if you need different logic
+
+class ScanScreenWrapper extends StatelessWidget {
+  final Widget child;
+
+  const ScanScreenWrapper({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // ✅ Go back to home when back button is pressed from Scan screen
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: MainScreenWrapper(child: child),
+    );
+  }
+}
+
+class TrashScreenWrapper extends StatelessWidget {
+  final Widget child;
+
+  const TrashScreenWrapper({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // ✅ Go back to home when back button is pressed from Trash screen
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: MainScreenWrapper(child: child),
+    );
+  }
+}
+
+class ProfileScreenWrapper extends StatelessWidget {
+  final Widget child;
+
+  const ProfileScreenWrapper({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // ✅ Go back to home when back button is pressed from Profile screen
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: MainScreenWrapper(child: child),
     );
   }
 }

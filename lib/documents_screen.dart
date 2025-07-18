@@ -14,16 +14,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   final supabase = Supabase.instance.client;
   List<dynamic> documents = [];
   bool isLoading = true;
+  String userName = 'Guest'; // Add userName variable
 
   static const Color cobaltBlue = Color(0xFF0047AB);
 
   @override
   void initState() {
     super.initState();
-    _loadDocuments();
+    _loadUserDataAndDocuments(); // Load both user data and documents
   }
 
-  Future<void> _loadDocuments() async {
+  // Updated method to load both user data and documents
+  Future<void> _loadUserDataAndDocuments() async {
     final user = supabase.auth.currentUser;
     if (user == null) {
       setState(() => isLoading = false);
@@ -31,6 +33,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
 
     try {
+      // Load user profile data
+      final profile = await supabase.from('profiles').select().eq('id', user.id).maybeSingle();
+
+      if (profile != null &&
+          profile['name'] != null &&
+          profile['name'].toString().trim().isNotEmpty) {
+        userName = profile['name'];
+      } else {
+        userName = user.email ?? 'Guest';
+      }
+
+      // Load documents
       final response = await supabase
           .from('scans')
           .select()
@@ -43,7 +57,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error loading documents: $e');
+      debugPrint('Error loading data: $e');
       setState(() => isLoading = false);
     }
   }
@@ -56,7 +70,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         const SnackBar(content: Text('Moved to Trash')),
       );
 
-      await _loadDocuments();
+      await _loadUserDataAndDocuments(); // Refresh data
     } catch (e) {
       debugPrint('Trash error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,22 +123,70 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = supabase.auth.currentUser;
-    final userName = user?.email ?? 'Guest';
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5FC),
-      appBar: AppBar(
-        backgroundColor: cobaltBlue,
-        title: Text(
-          '$userName\'s Documents',
-          style: const TextStyle(color: Colors.white),
+      backgroundColor: const Color(0xFFF9F9F9),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cobaltBlue,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    // Back button
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Title with username - expanded to fill available space
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          '$userName\'s Documents',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Empty space to balance the back button
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(color: cobaltBlue))
             : documents.isEmpty
                 ? const Center(child: Text('No documents found.'))
                 : ListView.builder(
@@ -153,15 +215,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                           children: [
                             GestureDetector(
                               onTap: () => _openDocument(doc),
-                              child: Image.network(
-                                supabase.storage.from('documents').getPublicUrl(
-                                  doc['document_url'].replaceFirst('documents/', ''),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  supabase.storage.from('documents').getPublicUrl(
+                                        doc['document_url'].replaceFirst('documents/', ''),
+                                      ),
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
                                 ),
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.broken_image),
                               ),
                             ),
                             const SizedBox(width: 12),
