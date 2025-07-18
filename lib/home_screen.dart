@@ -208,6 +208,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Technology Stack',
                   'Built with Flutter for cross-platform performance, integrated with Supabase for backend services and real-time data sync.',
                 ),
+                _buildAboutSection(
+                  'Developer',
+                  'Developed by Charitesh P, Passionate about AI, mobile tech, and empowering users with open-source tools, Email: charitesh25@gmail.com.',
+                ),
               ],
             ),
           ),
