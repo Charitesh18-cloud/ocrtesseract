@@ -102,6 +102,113 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
+  void _showEmailVerificationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 28),
+              const SizedBox(width: 8),
+              const Text(
+                'Account Created!',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Your account has been created successfully! To complete the registration process:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('1. ',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: cobaltBlue)),
+                        Expanded(
+                          child: Text('Check your email inbox for a verification link'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('2. ',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: cobaltBlue)),
+                        Expanded(
+                          child: Text('Click the verification link in the email'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('3. ',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: cobaltBlue)),
+                        Expanded(
+                          child: Text('Return to the app and sign in with your credentials'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Note: You must verify your email before you can sign in to your account.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/signin');
+              },
+              child: Text(
+                'Go to Sign In',
+                style: TextStyle(
+                  color: cobaltBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -144,25 +251,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (response.user != null) {
         if (!mounted) return;
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text('Account created! Check your email to confirm.'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
-        // Navigate to sign in
-        Navigator.pushReplacementNamed(context, '/signin');
+        // Show detailed email verification dialog
+        _showEmailVerificationDialog();
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
