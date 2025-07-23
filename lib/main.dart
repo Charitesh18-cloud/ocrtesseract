@@ -14,7 +14,224 @@ import 'history_screen.dart';
 import 'documents_screen.dart';
 import 'edit_text_screen.dart';
 import 'profile_screen.dart';
+import 'settings_screeimport 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// ✅ Screens
+import 'login_screen.dart';
+import 'home_screen.dart';
+import 'help_screen.dart';
+import 'signin_screen.dart';
+import 'signup_screen.dart';
+import 'reset_password_screen.dart';
+import 'history_screen.dart';
+import 'documents_screen.dart';
+import 'edit_text_screen.dart';
+import 'profile_screen.dart';
 import 'settings_screen.dart';
+import 'trash_screen.dart';
+import 'pdf_screen.dart';
+import 'deep_link_handler.dart';
+// Updated import: Use OCRScreen (with new UI/UX)
+import 'new_scan_screen.dart';
+
+// ✅ Supabase config
+const supabaseUrl = 'https://ymsnnnhdxkgeamqbfiqs.supabase.co';
+const supabaseAnonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltc25ubmhkeGtnZWFtcWJmaXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNjQwOTEsImV4cCI6MjA2Nzc0MDA5MX0.u8WyiUsz_Nr_nitQkItFt7EG5_Fk4RY6O2EjKtUQWUc';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+  runApp(const TesseractOCRApp());
+}
+
+class TesseractOCRApp extends StatefulWidget {
+  const TesseractOCRApp({super.key});
+  @override
+  State<TesseractOCRApp> createState() => _TesseractOCRAppState();
+}
+
+class _TesseractOCRAppState extends State<TesseractOCRApp> {
+  late final StreamSubscription<AuthState> _authSub;
+  bool _isAuthenticated = Supabase.instance.client.auth.currentSession != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ Init deep links AFTER widget has mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DeepLinkHandler.initialize(context);
+    });
+
+    final supabase = Supabase.instance.client;
+
+    // ✅ Listen for auth changes
+    _authSub = supabase.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      final session = data.session;
+
+      if (event == AuthChangeEvent.signedIn && session != null) {
+        debugPrint('✅ Auth state: signed in');
+        if (mounted) {
+          setState(() => _isAuthenticated = true);
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+        }
+      } else if (event == AuthChangeEvent.signedOut) {
+        debugPrint('🔓 Auth state: signed out');
+        if (mounted) {
+          setState(() => _isAuthenticated = false);
+          Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub.cancel();
+    DeepLinkHandler.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SuryOCR Flutter',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        fontFamily: 'Poppins',
+      ),
+      debugShowCheckedModeBanner: false,
+      initialRoute: _isAuthenticated ? '/home' : '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/home': (context) => const MainScreenWrapper(child: HomeScreen()),
+        '/signin': (context) => const SignInScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/reset': (context) => const ResetPasswordScreen(),
+        // NOTE: Use the modern OCRScreen with new UI/UX, as built in your latest file
+        '/scan': (context) =>
+            const BottomNavBackHandler(child: MainScreenWrapper(child: OCRScreen())),
+        '/help': (context) => const HelpScreen(),
+        '/history': (context) => const MainScreenWrapper(child: HistoryScreen()),
+        '/documents': (context) => const MainScreenWrapper(child: DocumentsScreen()),
+        '/profile': (context) =>
+            const BottomNavBackHandler(child: MainScreenWrapper(child: ProfileScreen())),
+        '/settings': (context) => const MainScreenWrapper(child: SettingsScreen()),
+        '/trash': (context) =>
+            const BottomNavBackHandler(child: MainScreenWrapper(child: TrashScreen())),
+        '/pdf': (context) => const MainScreenWrapper(child: PDFScreen()),
+        '/edit': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return MainScreenWrapper(
+            child: EditTextScreen(
+              imagePath: args['imagePath'],
+              ocrText: args['ocrText'],
+            ),
+          );
+        },
+      },
+    );
+  }
+}
+
+// ✅ Bottom Navigation Back Handler - For Scan, Trash, Profile screens
+class BottomNavBackHandler extends StatelessWidget {
+  final Widget child;
+  const BottomNavBackHandler({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false, // Prevent default pop behavior
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // ✅ Always go back to home when back button is pressed
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: child,
+    );
+  }
+}
+
+// ✅ Bottom Navigation Wrapper - no bottom navigation bar.
+class MainScreenWrapper extends StatefulWidget {
+  final Widget child;
+  const MainScreenWrapper({super.key, required this.child});
+  @override
+  State<MainScreenWrapper> createState() => _MainScreenWrapperState();
+}
+
+class _MainScreenWrapperState extends State<MainScreenWrapper> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: widget.child,
+      // bottomNavigationBar removed as per latest instruction
+    );
+  }
+}
+
+// --- Individual Screen Wrappers for custom pop logic (optional, keep/remove as needed) ---
+
+class ScanScreenWrapper extends StatelessWidget {
+  final Widget child;
+  const ScanScreenWrapper({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: MainScreenWrapper(child: child),
+    );
+  }
+}
+
+class TrashScreenWrapper extends StatelessWidget {
+  final Widget child;
+  const TrashScreenWrapper({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: MainScreenWrapper(child: child),
+    );
+  }
+}
+
+class ProfileScreenWrapper extends StatelessWidget {
+  final Widget child;
+  const ProfileScreenWrapper({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+      child: MainScreenWrapper(child: child),
+    );
+  }
+}
+n.dart';
 import 'trash_screen.dart';
 import 'pdf_screen.dart'; // ✅ ADD THIS - Import your PDF screen
 
