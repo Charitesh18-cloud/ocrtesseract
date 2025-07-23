@@ -42,8 +42,8 @@ A fully offline-capable mobile application for extracting, translating, and mana
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/indic-ocr.git
-cd indic-ocr
+git clone https://github.com/Charitesh18-cloud/ocrtesseract.git
+code . #for vs code setup
 
 # Get packages
 flutter pub get
@@ -131,14 +131,3 @@ MIT License – free to use and modify.
 - Hugging Face
 
 ---
-
-## 🌐 Backend (Optional but Recommended)
-
-FastAPI server handles:
-
-| Endpoint        | Purpose              |
-|-----------------|----------------------|
-| `/ocr`          | Perform OCR (fallback to OCR.space) |
-| `/translate`    | Translate text       |
-
-We've created this fastAPI bakend as part of OCR integration into corpus app for indic languages
