@@ -8,7 +8,10 @@ class SignUpScreen extends StatefulWidget {
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends State<SignUpScreen> with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<Offset>> _animations;
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -46,6 +49,42 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'Bodo',
     'Sanskrit'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+  }
+
+  void _initializeAnimations() {
+    // Create 8 controllers for: instruction, name, email, password, age, language, signup button, signin link
+    _controllers = List.generate(
+        8, (i) => AnimationController(vsync: this, duration: const Duration(milliseconds: 600)));
+
+    _animations = _controllers
+        .map((c) => Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .toList();
+
+    _startAnimations();
+  }
+
+  Future<void> _startAnimations() async {
+    for (int i = 0; i < _controllers.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 120));
+      if (mounted) _controllers[i].forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controllers.forEach((c) => c.dispose());
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
 
   // Validation methods
   String? _validateEmail(String? value) {
@@ -298,15 +337,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _nameController.dispose();
-    _ageController.dispose();
-    super.dispose();
-  }
-
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -471,109 +501,131 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           children: [
                             const SizedBox(height: 12),
 
-                            // Instruction text
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.blue.shade200),
-                              ),
-                              child: const Text(
-                                'Create your account by filling in the details below. '
-                                'After signing up, check your email to verify your account.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.w500,
+                            // Animated Instruction text
+                            SlideTransition(
+                              position: _animations[0],
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.blue.shade200),
+                                ),
+                                child: const Text(
+                                  'Create your account by filling in the details below. '
+                                  'After signing up, check your email to verify your account.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
 
                             const SizedBox(height: 24),
 
-                            // Name TextField (Required)
-                            _buildTextField(
-                              controller: _nameController,
-                              label: 'Full Name *',
-                              validator: _validateName,
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Email TextField
-                            _buildTextField(
-                              controller: _emailController,
-                              label: 'Email *',
-                              validator: _validateEmail,
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Password TextField with visibility toggle
-                            _buildTextField(
-                              controller: _passwordController,
-                              label: 'Password *',
-                              validator: _validatePassword,
-                              obscureText: _obscurePassword,
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
+                            // Animated Name TextField (Required)
+                            SlideTransition(
+                              position: _animations[1],
+                              child: _buildTextField(
+                                controller: _nameController,
+                                label: 'Full Name *',
+                                validator: _validateName,
                               ),
                             ),
 
                             const SizedBox(height: 16),
 
-                            // Age TextField (Optional)
-                            _buildTextField(
-                              controller: _ageController,
-                              label: 'Age (optional)',
-                              validator: _validateAge,
-                              keyboardType: TextInputType.number,
+                            // Animated Email TextField
+                            SlideTransition(
+                              position: _animations[2],
+                              child: _buildTextField(
+                                controller: _emailController,
+                                label: 'Email *',
+                                validator: _validateEmail,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
                             ),
 
                             const SizedBox(height: 16),
 
-                            // Language Dropdown (Optional)
-                            _buildLanguageDropdown(),
+                            // Animated Password TextField with visibility toggle
+                            SlideTransition(
+                              position: _animations[3],
+                              child: _buildTextField(
+                                controller: _passwordController,
+                                label: 'Password *',
+                                validator: _validatePassword,
+                                obscureText: _obscurePassword,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Animated Age TextField (Optional)
+                            SlideTransition(
+                              position: _animations[4],
+                              child: _buildTextField(
+                                controller: _ageController,
+                                label: 'Age (optional)',
+                                validator: _validateAge,
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Animated Language Dropdown (Optional)
+                            SlideTransition(
+                              position: _animations[5],
+                              child: _buildLanguageDropdown(),
+                            ),
 
                             const SizedBox(height: 32),
 
-                            // Sign Up button
-                            SizedBox(
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: cobaltBlue,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                            // Animated Sign Up button
+                            SlideTransition(
+                              position: _animations[6],
+                              child: SizedBox(
+                                height: 50,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: cobaltBlue,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    elevation: 2,
                                   ),
-                                  elevation: 2,
-                                ),
-                                onPressed: _isLoading ? null : _signUp,
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
+                                  onPressed: _isLoading ? null : _signUp,
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Sign Up',
+                                          style:
+                                              TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                                         ),
-                                      )
-                                    : const Text(
-                                        'Sign Up',
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                      ),
+                                ),
                               ),
                             ),
 
@@ -592,24 +644,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                             const SizedBox(height: 16),
 
-                            // Sign in link
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pushReplacementNamed(context, '/signin');
-                              },
-                              child: RichText(
-                                text: const TextSpan(
-                                  text: 'Already have an account? ',
-                                  style: TextStyle(color: Colors.grey),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Sign In',
-                                      style: TextStyle(
-                                        color: cobaltBlue,
-                                        fontWeight: FontWeight.w600,
+                            // Animated Sign in link
+                            SlideTransition(
+                              position: _animations[7],
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.pushReplacementNamed(context, '/signin');
+                                },
+                                child: RichText(
+                                  text: const TextSpan(
+                                    text: 'Already have an account? ',
+                                    style: TextStyle(color: Colors.grey),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Sign In',
+                                        style: TextStyle(
+                                          color: cobaltBlue,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
